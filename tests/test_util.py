@@ -3,8 +3,8 @@
 
 import unittest
 
-import util
-import imageshuffle
+from imageshuffle import util
+from imageshuffle import imageshuffle
 
 import numpy as np
 from PIL import Image

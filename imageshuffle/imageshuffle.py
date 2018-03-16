@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from util import MAX_UINT32
-from util import logisticmap
-from util import _enc_process, _dec_process
+from imageshuffle.util import MAX_UINT32
+from imageshuffle.util import logisticmap
+from imageshuffle.util import _enc_process, _dec_process
 
 def _enc_process( src, ord ):
 	dst = np.copy(src)

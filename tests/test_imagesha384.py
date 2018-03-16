@@ -3,7 +3,7 @@
 
 import unittest
 
-import imagesha384
+from imageshuffle import imagesha384
 
 import numpy as np
 from PIL import Image

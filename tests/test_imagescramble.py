@@ -3,7 +3,7 @@
 
 import unittest
 
-import imagescramble
+from imageshuffle import imagescramble
 
 import numpy as np
 from PIL import Image

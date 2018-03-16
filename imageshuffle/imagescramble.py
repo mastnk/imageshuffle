@@ -3,12 +3,12 @@
 
 import numpy as np
 
-from util import MAX_UINT32, MAX_UINT8
-from util import logisticmap
-from util import _enc_process, _dec_process
-from util import split_uint8, join_uint8
+from imageshuffle.util import MAX_UINT32, MAX_UINT8
+from imageshuffle.util import logisticmap
+from imageshuffle.util import _enc_process, _dec_process
+from imageshuffle.util import split_uint8, join_uint8
 
-import imageshuffle
+from imageshuffle import imageshuffle
 
 class Rand:
 	def __init__( self, key, bit_split = False ):
