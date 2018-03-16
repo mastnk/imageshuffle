@@ -17,8 +17,8 @@ It is a python package to degrade image data.
 
     from PIL import Image
     import numpy as np
-    import imageshuffle.imageshuffle as imageshuffle
-    import imageshuffle.imagescramble as imagescramble
+    from imageshuffle import imageshuffle
+    from imageshuffle import imagescramble
     
     img = Image.open('lena.png')
     ar = np.asarray(img)
