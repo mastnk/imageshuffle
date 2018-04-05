@@ -67,17 +67,67 @@ class test_ImageShffleRand( unittest.TestCase ):
 		self.assertTrue( (XX == YY).all() )
 
 	def test_uint8(self):
-		X = np.array( [0x00, 0x01, 0x10, 0x11], dtype=np.uint8 )
+		X = np.array( [0b00001111, 0b01010101, 0b01000001, 0b00011011], dtype=np.uint8 )
 		X = np.reshape( X, (2,2,1) )
 		
-		XX = util.split_uint8( X )
-		Y = util.join_uint8( XX )
+		##8
+		XX = util.split_uint8( X, 8 )
+		Y = util.join_uint8( XX, 8 )
 		
-		YY0 = np.reshape( np.array([0,0,1,1], dtype=np.uint8), (2,2))
-		YY1 = np.reshape( np.array([0,1,0,1], dtype=np.uint8), (2,2))
+		YY0 = np.reshape( np.array([0b00001111, 0b01010101, 0b01000001, 0b00011011], dtype=np.uint8), (2,2) )
+		
+		self.assertTrue( (XX[:,:,0] == YY0).all() )
+		self.assertTrue( (X == Y).all() )
+
+		##4
+		XX = util.split_uint8( X, 4 )
+		Y = util.join_uint8( XX, 4 )
+		
+		YY0 = np.reshape( np.array([0b0000, 0b0101, 0b0100, 0b0001], dtype=np.uint8), (2,2) )
+		YY1 = np.reshape( np.array([0b1111, 0b0101, 0b0001, 0b1011], dtype=np.uint8), (2,2) )
 		
 		self.assertTrue( (XX[:,:,0] == YY0).all() )
 		self.assertTrue( (XX[:,:,1] == YY1).all() )
+		self.assertTrue( (X == Y).all() )
+
+
+		##2
+		XX = util.split_uint8( X, 2 )
+		Y = util.join_uint8( XX, 2 )
+		
+		YY0 = np.reshape( np.array([0b00, 0b01, 0b01, 0b00], dtype=np.uint8), (2,2) )
+		YY1 = np.reshape( np.array([0b00, 0b01, 0b00, 0b01], dtype=np.uint8), (2,2) )
+		YY2 = np.reshape( np.array([0b11, 0b01, 0b00, 0b10], dtype=np.uint8), (2,2) )
+		YY3 = np.reshape( np.array([0b11, 0b01, 0b01, 0b11], dtype=np.uint8), (2,2) )
+		
+		self.assertTrue( (XX[:,:,0] == YY0).all() )
+		self.assertTrue( (XX[:,:,1] == YY1).all() )
+		self.assertTrue( (XX[:,:,2] == YY2).all() )
+		self.assertTrue( (XX[:,:,3] == YY3).all() )
+		self.assertTrue( (X == Y).all() )
+		
+
+		##1
+		XX = util.split_uint8( X, 1 )
+		Y = util.join_uint8( XX, 1 )
+		
+		YY0 = np.reshape( np.array([0b0, 0b0, 0b0, 0b0], dtype=np.uint8), (2,2) )
+		YY1 = np.reshape( np.array([0b0, 0b1, 0b1, 0b0], dtype=np.uint8), (2,2) )
+		YY2 = np.reshape( np.array([0b0, 0b0, 0b0, 0b0], dtype=np.uint8), (2,2) )
+		YY3 = np.reshape( np.array([0b0, 0b1, 0b0, 0b1], dtype=np.uint8), (2,2) )
+		YY4 = np.reshape( np.array([0b1, 0b0, 0b0, 0b1], dtype=np.uint8), (2,2) )
+		YY5 = np.reshape( np.array([0b1, 0b1, 0b0, 0b0], dtype=np.uint8), (2,2) )
+		YY6 = np.reshape( np.array([0b1, 0b0, 0b0, 0b1], dtype=np.uint8), (2,2) )
+		YY7 = np.reshape( np.array([0b1, 0b1, 0b1, 0b1], dtype=np.uint8), (2,2) )
+		
+		self.assertTrue( (XX[:,:,0] == YY0).all() )
+		self.assertTrue( (XX[:,:,1] == YY1).all() )
+		self.assertTrue( (XX[:,:,2] == YY2).all() )
+		self.assertTrue( (XX[:,:,3] == YY3).all() )
+		self.assertTrue( (XX[:,:,4] == YY4).all() )
+		self.assertTrue( (XX[:,:,5] == YY5).all() )
+		self.assertTrue( (XX[:,:,6] == YY6).all() )
+		self.assertTrue( (XX[:,:,7] == YY7).all() )
 		self.assertTrue( (X == Y).all() )
 		
 

@@ -51,16 +51,85 @@ def paddingBlockSize( X, blockSize ):
 	
 	return X	
 
-def split_uint8(X):
+def split_uint8(X, nb_bits):
 	assert(X.dtype == np.uint8)
-	X1 = X >> 4
-	X0 = X & 0x0F
-	return np.concatenate( (X1, X0), axis=2 )
+	
+	if( nb_bits == 1 ):
+		X7 = X >> 7
+		X6 = X >> 6
+		X5 = X >> 5
+		X4 = X >> 4
+		X3 = X >> 3
+		X2 = X >> 2
+		X1 = X >> 1
+		Y = np.concatenate( (X7, X6, X5, X4, X3, X2, X1, X), axis=2 ) & 0x01
+		
+	elif( nb_bits == 2 ):
+		X6 = X >> 6
+		X4 = X >> 4
+		X2 = X >> 2
+		Y = np.concatenate( (X6, X4, X2, X), axis=2 ) & 0x03
+	
+	elif( nb_bits == 4 ):
+		X4 = X >> 4
+		Y = np.concatenate( (X4, X), axis=2 ) & 0x0F
 
-def join_uint8(X):
+	elif( nb_bits == 8 ):
+		Y = np.copy(X)
+		
+	else:
+		raise ValueError('Invalide value of nb_bits: {nb_bits:d}'.format(nb_bits=nb_bits))
+	
+	return Y
+
+def join_uint8(X, nb_bits):
 	assert(X.dtype == np.uint8)
-	assert(X.shape[2] % 2 == 0)
-	s = X.shape[2]//2
-	X1 = X[:,:,:s]
-	X0 = X[:,:,s:]
-	return ( X1 << 4 ) + X0
+	
+	if( nb_bits == 1 ):
+		if( X.shape[2] % 8 != 0 ):
+			msg = 'X.shape[2] should be multiples of 8. But, it is {}.'.format(X.shape[2])
+			raise ValueError(msg)
+			
+		s = X.shape[2]//8
+	
+		X7 = X[:,:,   :s]
+		X6 = X[:,:,  s:2*s]
+		X5 = X[:,:,2*s:3*s]
+		X4 = X[:,:,3*s:4*s]
+		X3 = X[:,:,4*s:5*s]
+		X2 = X[:,:,5*s:6*s]
+		X1 = X[:,:,6*s:7*s]
+		X0 = X[:,:,7*s:]
+		Y = ( X7 << 7 ) + ( X6 << 6 ) + ( X5 << 5 ) + ( X4 << 4 ) + ( X3 << 3 ) + ( X2 << 2 ) + ( X1 << 1 ) + X0
+		
+	elif( nb_bits == 2 ):
+		if( X.shape[2] % 4 != 0 ):
+			msg = 'X.shape[2] should be multiples of 4. But, it is {}.'.format(X.shape[2])
+			raise ValueError(msg)
+
+		s = X.shape[2]//4
+
+		X6 = X[:,:,   :s]
+		X4 = X[:,:,  s:2*s]
+		X2 = X[:,:,2*s:3*s]
+		X0 = X[:,:,3*s:4*s]
+		Y = ( X6 << 6 ) + ( X4 << 4 ) + ( X2 << 2 ) + X0
+	
+	elif( nb_bits == 4 ):
+		if( X.shape[2] % 2 != 0 ):
+			msg = 'X.shape[2] should be multiples of 2. But, it is {}.'.format(X.shape[2])
+			raise ValueError(msg)
+
+		s = X.shape[2]//2
+
+		X4 = X[:,:,:s]
+		X0 = X[:,:,s:]
+		Y = ( X4 << 4 ) + X0
+
+	elif( nb_bits == 8 ):
+		Y = np.copy(X)
+		
+	else:
+		raise ValueError('Invalide value of nb_bits: {nb_bits:d}'.format(nb_bits=nb_bits))
+
+	return Y

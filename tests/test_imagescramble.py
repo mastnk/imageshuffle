@@ -53,7 +53,7 @@ class test_ImageShffleRand( unittest.TestCase ):
 	def test_RandBlock(self):
 		ar0 = self.ar
 		
-		imScramble = imagescramble.RandBlock( 567, (8,8), ord2rev = False )
+		imScramble = imagescramble.RandBlock( 567, (8,8), rev_mode = imagescramble.REV_NONE )
 		
 		roiSize = imScramble.calcRoiSize( ar0 )
 		self.assertEqual( roiSize, (512,512,3) )
@@ -66,7 +66,7 @@ class test_ImageShffleRand( unittest.TestCase ):
 			Image.fromarray( ar2 ).save( write_image+'RandBlock2.png' )		
 		self.assertTrue( ( ar0 == ar2 ).all() )
 		
-		imScramble = imagescramble.RandBlock( 123, (7,9), ord2rev = True )
+		imScramble = imagescramble.RandBlock( 123, (7,9), rev_ratio = 0.5 )
 		ar1 = imScramble.enc( ar0 )
 		ar2 = imScramble.dec( ar1 )
 		if( write_image is not None ):
@@ -74,12 +74,20 @@ class test_ImageShffleRand( unittest.TestCase ):
 			Image.fromarray( ar2 ).save( write_image+'RandBlock4.png' )
 		self.assertTrue( ( ar0 == ar2 ).all() )
 
-		imScramble = imagescramble.RandBlock( 123, (7,9), ord2rev = True, bit_split = True )
+		imScramble = imagescramble.RandBlock( 123, (7,9), rev_ratio = 0.5, nb_bits = 4, rev_mode = imagescramble.REV_RAND )
 		ar1 = imScramble.enc( ar0 )
 		ar2 = imScramble.dec( ar1 )
 		if( write_image is not None ):
 			Image.fromarray( ar1 ).save( write_image+'RandBlock5.png' )
 			Image.fromarray( ar2 ).save( write_image+'RandBlock6.png' )
+		self.assertTrue( ( ar0 == ar2 ).all() )
+
+		imScramble = imagescramble.RandBlock( 123, (8,8), rev_ratio = 0.5, nb_bits = 2 )
+		ar1 = imScramble.enc( ar0 )
+		ar2 = imScramble.dec( ar1 )
+		if( write_image is not None ):
+			Image.fromarray( ar1 ).save( write_image+'RandBlock7.png' )
+			Image.fromarray( ar2 ).save( write_image+'RandBlock8.png' )
 		self.assertTrue( ( ar0 == ar2 ).all() )
 		
 

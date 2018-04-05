@@ -10,14 +10,42 @@ from imageshuffle.util import split_uint8, join_uint8
 
 from imageshuffle import imageshuffle
 
+REV_NONE = 0
+REV_RAND = 1
+REV_ORD  = 2
+
 class Rand:
-	def __init__( self, key, bit_split = False ):
+	def __init__( self, key, nb_bits = 4, rev_mode = REV_ORD, rev_ratio = 0.5 ):
 		self.key = key
 		self.ord = None
 		self.rev = None
 		self.roiSize = None
-		self.bit_split = bit_split
+		self.nb_bits = nb_bits
+		self.rev_mode = rev_mode
+		self.rev_ratio = rev_ratio
 		self.rand_init()
+		
+		if( self.rev_ratio < 0 ):
+			self.rev_ratio = 0
+		if( self.rev_ratio > 1 ):
+			self.rev_ratio = 1
+		
+		if( self.rev_mode < 0 or self.rev_mode > 2 ):
+			msg = 'rev_mode should be 0, 1, or 2. (REV_NONE, REV_RADND, or REV_ORD)'
+			raise ValueError(msg)
+		
+		
+		if( nb_bits == 1 ):
+			self.rev_max = 1
+		elif( nb_bits == 2 ):
+			self.rev_max = 3
+		elif( nb_bits == 4 ):
+			self.rev_max = 15
+		elif( nb_bits == 8 ):
+			self.rev_max = 255
+		else:
+			msg = 'nb_bits is {nb_bits:d}, but it should be 1, 2, 4, or 8.'.format(nb_bits=nb_bits)
+			raise ValueError(msg)
 		
 	
 	def rand_init( self ):
@@ -32,7 +60,7 @@ class Rand:
 			self.rand_init()
 			self.ord, self.rev = self.calcOrdRev()
 	
-	def process( self, input, func, rev_max ):
+	def process( self, input, func ):
 		assert( input.dtype == np.uint8 )
 		roiSize = self.calcRoiSize( input )
 		self.setOrdRev( roiSize )
@@ -41,9 +69,13 @@ class Rand:
 		
 		src = np.reshape( src, (roiSize[0]*roiSize[1]*roiSize[2]) )
 		
-		src[ self.rev ] = rev_max - src[ self.rev ]
+		if( self.rev_mode > 0 ):
+			src[ self.rev ] = self.rev_max - src[ self.rev ]
+
 		dst = func( src, self.ord )
-		dst[ self.rev ] = rev_max - dst[ self.rev]
+
+		if( self.rev_mode > 0 ):
+			dst[ self.rev ] = self.rev_max - dst[ self.rev]
 		
 		output = np.copy( input )
 		output[ :roiSize[0], :roiSize[1], : ] = np.reshape( dst, roiSize )
@@ -51,17 +83,10 @@ class Rand:
 		return output
 	
 	def enc( self, input ):
-		if( self.bit_split ):
-			return join_uint8( self.process( split_uint8( input ), _enc_process, 15 ) )
-		else:
-			return self.process( input, _enc_process, 255 )
+		return join_uint8( self.process( split_uint8( input, self.nb_bits ), _enc_process ), self.nb_bits )
 
 	def dec( self, input ):
-		if( self.bit_split ):
-			return join_uint8( self.process( split_uint8( input ), _dec_process, 15 ) )
-		else:
-			return self.process( input, _dec_process, 255 )
-		
+		return join_uint8( self.process( split_uint8( input, self.nb_bits ), _dec_process ), self.nb_bits )
 		
 	######
 	def calcRoiSize( self, input ):
@@ -69,16 +94,19 @@ class Rand:
 
 	def calcOrdRev( self ):
 		ord = np.argsort( np.array( [ self.rand() for i in range(self.roiSize[0] * self.roiSize[1] * self.roiSize[2]) ] ) )
-		rev = np.array( [ self.rand() for i in range(self.roiSize[0] * self.roiSize[1] * self.roiSize[2]) ] ) > 0.5
+		
+		if( self.rev_mode == REV_ORD ):
+			rev = ( ord > self.roiSize[0] * self.roiSize[1] * self.roiSize[2] * self.rev_ratio )
+		else:
+			rev = np.array( [ self.rand() for i in range(self.roiSize[0] * self.roiSize[1] * self.roiSize[2]) ] ) > self.rev_ratio
+			
 		return  ( ord, rev )
 
 
 class RandBlock(Rand):
-	def __init__( self, key, blockSize, ord2rev = True, rev_ratio = 0.5, bit_split = False  ):
-		super(RandBlock, self).__init__(key, bit_split)
+	def __init__( self, key, blockSize, nb_bits = 4, rev_mode = REV_ORD, rev_ratio = 0.5 ):
+		super(RandBlock, self).__init__(key, nb_bits, rev_mode, rev_ratio )
 		self.blockSize = blockSize
-		self.ord2rev = ord2rev
-		self.rev_ratio = rev_ratio
 
 	######
 	def calcRoiSize( self, input ):
@@ -101,22 +129,23 @@ class RandBlock(Rand):
 		nb_blocks0 = self.roiSize[0] // self.blockSize[0]
 		nb_blocks1 = self.roiSize[1] // self.blockSize[1]
 		
-		_rev = np.array( list(range(self.blockSize[0] * self.blockSize[1] * self.roiSize[2])) ) > self.rev_ratio
-		_rev = np.reshape( _rev, (self.blockSize[0], self.blockSize[1], self.roiSize[2]) )
+		if( self.rev_mode == REV_ORD ):
+			row=0
+			col=0
+			imShuffle.enc( ord[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] )
+			_rev = imShuffle.ord > imShuffle.ord.size * self.rev_ratio
+			_rev = np.reshape( _rev, (self.blockSize[0], self.blockSize[1], self.roiSize[2]) )
+			
+		else:
+			_rev = np.array( [ self.rand() for i in range(self.blockSize[0] * self.blockSize[1] * self.roiSize[2]) ] ) > self.rev_ratio
+			_rev = np.reshape( _rev, (self.blockSize[0], self.blockSize[1], self.roiSize[2]) )
 		
 		for row in range(nb_blocks0):
 			for col in range(nb_blocks1):
 				ord[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] = \
 				imShuffle.enc( ord[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] )
 				
-				if( self.ord2rev ):
-					_rev = imShuffle.ord > imShuffle.ord.size * self.rev_ratio
-					_rev = np.reshape( _rev, (self.blockSize[0], self.blockSize[1], self.roiSize[2]) )
-					rev[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] = \
-					_rev
-				else:
-					rev[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] = \
-					_rev
+				rev[row*self.blockSize[0]:(row+1)*self.blockSize[0], col*self.blockSize[1]:(col+1)*self.blockSize[1], :] = _rev
 		
 		ord = np.reshape( ord, (self.roiSize[0] * self.roiSize[1] * self.roiSize[2]) )
 		rev = np.reshape( rev, (self.roiSize[0] * self.roiSize[1] * self.roiSize[2]) )

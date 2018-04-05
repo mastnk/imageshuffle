@@ -25,6 +25,10 @@ def sha3_384( data ):
 	return hashlib.sha3_384(data).digest()
 
 def dec( src, salt = None, sha = 'sha2' ):
+	assert( src.shape[0] % 4 == 0 )
+	assert( src.shape[1] % 4 == 0 )
+	assert( src.shape[2] == 3 )
+	assert( src.dtype == np.uint8 )
 	
 	if( salt is not None ):
 		x = salt
@@ -44,6 +48,9 @@ def dec( src, salt = None, sha = 'sha2' ):
 		sha_func = shake256
 	elif( sha.lower() == 'shake128' ):
 		sha_func = shake128
+	else:
+		msg = 'Unsported algorithm: {}'.format(sha)
+		raise ValueError(msg)
 	
 	s = src.shape
 	nb_blocks0 = s[0] // 4
