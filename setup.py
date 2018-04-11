@@ -8,7 +8,7 @@ sys.path.append('./tests')
 
 setup(
 	name= 'imageshuffle', # Application name:
-	version= '0.1.3', # Version number
+	version= '0.2.1', # Version number
 
 	author= 'Masayuki Tanaka', # Author name
 	author_email= 'mastnk@gmail.com', # Author mail	
