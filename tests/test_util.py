@@ -130,6 +130,22 @@ class test_ImageShffleRand( unittest.TestCase ):
 		self.assertTrue( (XX[:,:,7] == YY7).all() )
 		self.assertTrue( (X == Y).all() )
 		
+	def test_uint8dim(self):
+		X = np.array( [0b00001111, 0b01010101, 0b01000001, 0b00011011], dtype=np.uint8 )
+		X = np.reshape( X, (1,2,2,1) )
+		
+		XX = util.split_uint8( X, 4 )
+		Y = util.join_uint8( XX, 4 )
+		
+		self.assertTrue( XX.shape == (1,2,2,2) )
+		self.assertTrue( Y.shape == (1,2,2,1) )
+		
+		YY0 = np.reshape( np.array([0b0000, 0b0101, 0b0100, 0b0001], dtype=np.uint8), (2,2) )
+		YY1 = np.reshape( np.array([0b1111, 0b0101, 0b0001, 0b1011], dtype=np.uint8), (2,2) )
+		
+		self.assertTrue( (XX[0,:,:,0] == YY0).all() )
+		self.assertTrue( (XX[0,:,:,1] == YY1).all() )
+		self.assertTrue( (X == Y).all() )
 
 ###################################################################
 	def suite():

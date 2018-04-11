@@ -8,7 +8,7 @@ sys.path.append('./tests')
 
 setup(
 	name= 'imageshuffle', # Application name:
-	version= '0.2.1', # Version number
+	version= '0.2.2', # Version number
 
 	author= 'Masayuki Tanaka', # Author name
 	author_email= 'mastnk@gmail.com', # Author mail	
@@ -30,6 +30,8 @@ setup(
 		'License :: OSI Approved :: MIT',
     ]
 )
+
+# python -m unittest tests.test_
 
 # uninstall
 # % python setup.py install --record installed_files
